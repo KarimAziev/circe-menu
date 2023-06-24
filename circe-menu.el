@@ -41,6 +41,17 @@
   :type '(radio (const :tag "Not set" nil)
                 (string :tag "A network or server name as a string")))
 
+(defcustom circe-menu-auth-source-bitlbee-entry-name nil
+  "Entry name for retrieving bitlbee configuration with `pass'.
+
+The entry should should have password the following fields:
+\\='((secret . \"BITLBEE_PASSWORD\")
+ (\"login\" . \"my-login\")
+ (\"channels\" . \"(:immediate \\\"&bitlbee\\\" :after-auth \\\"#SERVER/CHANNEL\\\")\"))"
+  :group 'circe
+  :type '(radio (const :tag "Not set" nil)
+                (string :tag "Pass entry")))
+
 (defvar circe-menu-chat-buffers nil
   "List of chat buffers.")
 
@@ -429,6 +440,75 @@ TRANSFORM-FN is called with two arguments - value and key."
            v)
    '("n" "p")))
 
+(defun circe-menu-plist-remove (keys plist)
+  "Remove KEYS and values from PLIST."
+  (let* ((result (list 'head))
+         (last result))
+    (while plist
+      (let* ((key (pop plist))
+             (val (pop plist))
+             (new (and (not (memq key keys))
+                       (list key val))))
+        (when new
+          (setcdr last new)
+          (setq last (cdr new)))))
+    (cdr result)))
+
+(defun circe-menu-setup-bitlbee ()
+  "Add and setup Bitlbee to `circe-network-options' if it is not present.
+This function uses `pass' to retrieve \"bitlbee\".
+The entry should should have password the following fields:
+\\='((secret . \"BITLBEE_PASSWORD\")
+ (\"login\" . \"my-login\")
+ (\"channels\" . \"(:immediate \\\"&bitlbee\\\" :after-auth \\\"#SERVER/CHANNEL\\\")\"))"
+
+  (when circe-menu-auth-source-bitlbee-entry-name
+    (require 'auth-source-pass)
+    (unless (and (boundp 'circe-network-options)
+               (assoc-string "Bitlbee" circe-network-options))
+    (when-let ((entry
+                (when (fboundp 'auth-source-pass-parse-entry)
+                  (auth-source-pass-parse-entry circe-menu-auth-source-bitlbee-entry-name))))
+      (let ((nickserv-password (alist-get 'secret entry))
+            (nick
+             (if-let ((field (seq-find (lambda (field)
+                                         (assoc-string field entry))
+                                       '("login" "user" "username" "email"))))
+                 (cdr (assoc-string field entry))
+               (user-login-name)))
+            (channels
+             (if-let ((chans (cdr
+                              (assoc-string
+                               "channels"
+                               entry))))
+                 (car
+                  (read-from-string
+                   (cdr
+                    (assoc-string
+                     "channels"
+                     entry))))
+               '(:immediate "&bitlbee")))
+            (defaults (cdr
+                       (when-let* ((def (assoc-string "Bitlbee"
+                                                      (when
+                                                          (boundp
+                                                           'circe-network-defaults)
+                                                        circe-network-defaults)))
+                                   (pl (circe-menu-plist-remove '(:lagmon-disabled)
+                                                        (cdr def))))
+                         (setcdr def pl)
+                         def))))
+        ;; Remove lagmon-disabled due to annoying warning: Unknown option :lagmon-disabled, ignored
+        (when (boundp 'circe-network-options)
+          (add-to-list
+           'circe-network-options
+           (append (list "Bitlbee")
+                   (circe-menu-plist-remove '(:lagmon-disabled) defaults)
+                   (list
+                    :nick nick
+                    :nickserv-password nickserv-password
+                    :channels channels)))))))))
+
 
 
 ;;;###autoload (autoload 'circe-menu "circe-menu.el" nil t)
@@ -461,12 +541,13 @@ TRANSFORM-FN is called with two arguments - value and key."
                                            circe-menu-chat-buffers))))))]
   (interactive)
   (setq circe-menu-chat-buffers (circe-menu-get-buffer-names))
-  (if (and (not circe-menu-chat-buffers)
-           (require 'circe))
-      (if circe-menu-initial-network-or-server
-          (funcall-interactively #'circe circe-menu-initial-network-or-server)
-        (call-interactively #'circe))
-    (transient-setup 'circe-menu)))
+  (if circe-menu-chat-buffers
+      (transient-setup 'circe-menu)
+    (require 'circe)
+    (circe-menu-setup-bitlbee)
+    (if circe-menu-initial-network-or-server
+        (funcall-interactively #'circe circe-menu-initial-network-or-server)
+      (call-interactively #'circe))))
 
 (provide 'circe-menu)
 ;;; circe-menu.el ends here
