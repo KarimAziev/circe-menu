@@ -31,7 +31,7 @@ Transient menu for circe commands.
              :repo "KarimAziev/circe-menu"
              :type git
              :host github)
-  :bind ("<f12>" . circe-menu))
+  :bind ("<f10>" . circe-menu))
 #+end_src
 
 ** Manual installation
