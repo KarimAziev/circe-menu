@@ -5,7 +5,7 @@
 ;; Author: Karim Aziiev <karim.aziiev@gmail.com>
 ;; URL: https://github.com/KarimAziev/circe-menu
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "28.1"))
+;; Package-Requires: ((emacs "28.1") (transient "0.5.3"))
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; Keywords: comm
 
@@ -519,7 +519,7 @@ The entry should should have password the following fields:
    (lambda (&rest _)
      (mapcar
       (apply-partially #'transient-parse-suffix
-                       transient--prefix)
+                       (oref transient--prefix command))
       (circe-menu-get-buffer-suffixes)))]
   ["Next"
    ("p" circe-menu-prev-buffer
