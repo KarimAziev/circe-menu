@@ -520,7 +520,8 @@ The entry should should have password the following fields:
      (mapcar
       (apply-partially #'transient-parse-suffix
                        (oref transient--prefix command))
-      (circe-menu-get-buffer-suffixes)))]
+      (circe-menu-get-buffer-suffixes)))
+   :class transient-column]
   ["Next"
    ("p" circe-menu-prev-buffer
     :description
