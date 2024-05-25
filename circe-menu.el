@@ -326,13 +326,11 @@ TRANSFORM-FN is called with two arguments - value and key."
         (switch-to-buffer next nil t)
         (transient-setup 'circe-menu)))))
 
-;;;###autoload
 (defun circe-menu-next-buffer ()
   "Switch to the next circe chat buffer."
   (interactive)
   (circe-menu-switch-to-next-or-prev-buffer 1))
 
-;;;###autoload
 (defun circe-menu-prev-buffer ()
   "Switch to the previous circe chat buffer."
   (interactive)
