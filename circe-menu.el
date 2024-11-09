@@ -275,7 +275,7 @@ TRANSFORM-FN is called with two arguments - value and key."
 
 (defun circe-menu-get-next-or-prev-element (element step switch-list)
   "Get ELEMENT depending on STEP value and SWITCH-LIST."
-  (if-let ((pos (seq-position switch-list element #'string=)))
+  (if-let* ((pos (seq-position switch-list element #'string=)))
       (nth (circe-menu-index-switcher step pos switch-list) switch-list)
     (pcase step
       ((pred (> 0))
@@ -289,11 +289,11 @@ TRANSFORM-FN is called with two arguments - value and key."
          (if (derived-mode-p 'circe-chat-mode)
              (current-buffer)
            (or
-            (when-let ((wnd (seq-find
+            (when-let* ((wnd (seq-find
                              (lambda (it)
                                (and (window-live-p it)
                                     (not (window-dedicated-p it))
-                                    (when-let ((b (window-buffer it)))
+                                    (when-let* ((b (window-buffer it)))
                                       (and (not (minibufferp b))
                                            (with-current-buffer b
                                              (derived-mode-p
@@ -372,12 +372,12 @@ TRANSFORM-FN is called with two arguments - value and key."
                                      (interactive)
                                      (let ((all-buffs
                                             (circe-menu-get-buffer-names)))
-                                       (when-let ((buff
+                                       (when-let* ((buff
                                                    (get-buffer
                                                     ,it)))
                                          (when (buffer-live-p
                                                 buff)
-                                           (if-let ((wnd
+                                           (if-let* ((wnd
                                                      (seq-find
                                                       (lambda
                                                         (n)
@@ -464,18 +464,18 @@ The entry should should have password the following fields:
     (require 'auth-source-pass)
     (unless (and (boundp 'circe-network-options)
                (assoc-string "Bitlbee" circe-network-options))
-    (when-let ((entry
+    (when-let* ((entry
                 (when (fboundp 'auth-source-pass-parse-entry)
                   (auth-source-pass-parse-entry circe-menu-auth-source-bitlbee-entry-name))))
       (let ((nickserv-password (alist-get 'secret entry))
             (nick
-             (if-let ((field (seq-find (lambda (field)
+             (if-let* ((field (seq-find (lambda (field)
                                          (assoc-string field entry))
                                        '("login" "user" "username" "email"))))
                  (cdr (assoc-string field entry))
                (user-login-name)))
             (channels
-             (if-let ((chans (cdr
+             (if-let* ((chans (cdr
                               (assoc-string
                                "channels"
                                entry))))
